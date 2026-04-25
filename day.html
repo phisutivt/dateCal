@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมคำนวณวัน</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f6f9; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .container { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
+            width: 100%; 
+            max-width: 400px; 
+        }
+        h2 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 20px;
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #34495e; 
+            font-size: 14px;
+        }
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #bdc3c7; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-size: 16px;
+            text-align: center;
+        }
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background-color: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 18px; 
+            font-weight: bold; 
+            transition: background-color 0.3s; 
+            margin-top: 10px;
+        }
+        button:hover { 
+            background-color: #2980b9; 
+        }
+        .result { 
+            margin-top: 25px; 
+            padding: 20px; 
+            background-color: #eaf2f8; 
+            border: 2px dashed #3498db;
+            border-radius: 8px; 
+            text-align: center; 
+            font-size: 18px; 
+            color: #2c3e50; 
+            display: none; 
+            line-height: 1.6;
+        }
+        .highlight {
+            font-size: 26px;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📅 คำนวณระยะห่างวันที่</h2>
+    
+    <div class="input-group">
+        <label for="dateInput">กรอกวันที่ (รูปแบบ: วว/ดด/ปป)</label>
+        <input type="text" id="dateInput" placeholder="เช่น 2/5/69 หรือ 15/12/69">
+    </div>
+
+    <button onclick="calculateDateDiff()">คำนวณ</button>
+
+    <div class="result" id="resultBox">
+        </div>
+</div>
+
+<script>
+    // เพิ่มความสะดวก: ให้กด Enter แล้วคำนวณได้เลย
+    document.getElementById("dateInput").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            calculateDateDiff();
+        }
+    });
+
+    function calculateDateDiff() {
+        const inputStr = document.getElementById('dateInput').value.trim();
+        const resultBox = document.getElementById('resultBox');
+
+        // ตรวจสอบว่ามีข้อมูลและมีเครื่องหมาย / จำนวน 2 อัน
+        const parts = inputStr.split('/');
+        if (parts.length !== 3) {
+            alert("กรุณากรอกวันที่ให้ถูกต้องตามรูปแบบ วว/ดด/ปป (เช่น 2/5/69) ครับ");
+            return;
+        }
+
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const shortYearBE = parseInt(parts[2]);
+
+        // ตรวจสอบว่ากรอกตัวเลขถูกต้องหรือไม่
+        if (isNaN(day) || isNaN(month) || isNaN(shortYearBE)) {
+            alert("กรุณากรอกตัวเลขวันที่ให้ถูกต้องครับ");
+            return;
+        }
+
+        // แปลงปี พ.ศ. 2 หลัก เป็น ค.ศ. (เช่น 69 -> 2569 -> 2026)
+        const fullYearBE = 2500 + shortYearBE;
+        const fullYearAD = fullYearBE - 543;
+
+        // สร้าง Date Object (ต้องลบเดือนด้วย 1 เพราะในระบบ JavaScript นับ ม.ค. เป็น 0)
+        const targetDate = new Date(fullYearAD, month - 1, day);
+        targetDate.setHours(0, 0, 0, 0);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // ตรวจสอบความถูกต้องของเดือน (ป้องกันการใส่วันที่ 31 ก.พ.)
+        if (targetDate.getMonth() !== (month - 1)) {
+            alert("วันที่ไม่ถูกต้องสำหรับเดือนที่ระบุครับ");
+            return;
+        }
+
+        // คำนวณความต่างของเวลาเป็นมิลลิวินาที แล้วแปลงเป็นวัน
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let htmlContent = '';
+
+        if (diffDays > 0) {
+            const weeks = Math.floor(diffDays / 7);
+            const days = diffDays % 7;
+            htmlContent = `อีก <span class="highlight">${diffDays}</span> วัน<br>
+                           คิดเป็น <b>${weeks}</b> สัปดาห์ <b>${days}</b> วัน`;
+        } else if (diffDays < 0) {
+            const absDays = Math.abs(diffDays);
+            const weeks = Math.floor(absDays / 7);
+            const days = absDays % 7;
+            htmlContent = `ผ่านมาแล้ว <span class="highlight">${absDays}</span> วัน<br>
+                           คิดเป็น <b>${weeks}</b> สัปดาห์ <b>${days}</b> วัน`;
+        } else {
+            htmlContent = `<span class="highlight">วันนี้ครับ!</span>`;
+        }
+
+        resultBox.innerHTML = htmlContent;
+        resultBox.style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
